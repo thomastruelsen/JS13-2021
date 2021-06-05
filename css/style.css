@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Mate+SC&display=swap');
+:root{
+    --theme:#da532c;
+    --hColor:white;
+    --pColor:black;
+
+}
+body{
+    background-color: var(--theme);
+    font-family: 'Mate SC', serif;
+    color: var(--pColor);
+}
+h1,h2,h3,h4,h5,h6{
+    color: var(--hColor);
+}
