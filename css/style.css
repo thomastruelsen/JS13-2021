@@ -1,33 +1,121 @@
-@import url('https://fonts.googleapis.com/css2?family=Mate+SC&display=swap');
 :root{
-    --theme:#da532c;
-    --hColor:white;
-    --pColor:black;
-
+    --t:black;
+    --m:#F4D06F;
+    --d:red;
+    --r:#380202;
+    --w:yellow;
+    --g:green;
+    --h:25px;
+    --w:25px;
+    --grey: #fcfcfc;
+    --shadow: 0px 0px 1px 0px #4c4c4c;
+}
+@property --num {
+    syntax: '<integer>';
+    initial-value: 0;
+    inherits: false;
+}
+html {
+    background-color: var(--t);
 }
 body{
-    background-color: var(--theme);
-    font-family: 'Mate SC', serif;
-    color: var(--pColor);
+    background-color: var(--t);
     margin: 0;
     height: 100vh;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-in;
+}
+p{margin: 0px;}
+#s {
+    height: 100px;
+    background-color: var(--m);
+}
+#a {
+    width: 400px;
+    height: 600px;
+    background: beige;
+    margin: auto;
+}
+#m2 {
+    display: flex;
+    place-content: center;
+    height: 400px;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    transition-duration: 0.75s;
+    transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.tron{
+    transform: rotate3d(1, 0, 0, 90deg);
+}
+#m {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    background-color: var(--grey);
+    user-select: none;
+}
+#mC {
+    position: absolute;
+}
+.z0{    z-index: 0;}
+#mC .row > div {
+    position: absolute;
+    transition-duration: 0.75s;
+    transition-timing-function: cubic-bezier(0.41, -0.05, 0.5, -0.18);
+    top: 0;
+    left: 0;
+    transform:rotate3d(1, 1, 1, 0deg);
+}
+.row {
+    display: flex;
+}
+.row > div{
+    width: var(--w);
+    height: var(--h);
+    box-sizing: border-box;
+    border:1px solid; 
+    cursor: pointer;
+    transition-duration: 0.1s;
+    transition-timing-function: ease-out;
+    background-color: #e1e1e1;
+    opacity: 1;
+    box-shadow: var(--shadow);
+    z-index: 5;
+}
+.row > div[r=true] > div {
+    text-align: center;
+    width: var(--w);
+    height: var(--h);
+    display: block;
+    transition-duration: 1s;
+    transition-timing-function: ease-in;
+    line-height: 1.4;
+}
 
+.row .adjacent {
+    background-color: #d6d6ff;
 }
-h1,h2,h3,h4,h5,h6{
-    color: var(--hColor);
+.row .b {
+    background-color: #220303;
+    transform: scale(0.5);
+    z-index: 100;
 }
-.main{
-    background: linear-gradient(to bottom, #1d1c25, var(--theme));
-    background: -webkit-linear-gradient(top, #1d1c25, var(--theme));
+.row .dead {
+    opacity: 0.3;
+    z-index: 1;
 }
-.top {
-    height: 100px;
-    box-shadow: 0px 2px 3px 0px rgb(0 0 0 / 50%);
+.btn {
+    cursor: pointer;
+    padding: 5px;
+    width: 75px;
+    text-align: center;
 }
-.mid {
-    min-height: calc(100vh - 200px);
-}
-.bottom {
-    height: 100px;
-    box-shadow: 0px -2px 3px 0px rgb(0 0 0 / 50%);
+.btn:hover {
 }
