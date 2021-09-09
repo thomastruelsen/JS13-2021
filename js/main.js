@@ -1,5 +1,9 @@
 const root = document.getElementById("m");
 const b = document.getElementById("b");
+const s = document.getElementById("s");
+const X = "👾";
+const SS = "🚀";
+const PL = "🪐";
 function randomNum(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max) + 1;
@@ -8,17 +12,26 @@ function randomNum(min, max) {
 window.g = {
     t: {},
     r: {},
-    lvl:1,
+    lvl:{lvl:1},
+    shA: 1,
+    blA:1,
+    scA:2,
+    q: 2,
     b:1,
     mb:1,
+    bb:2,
+    st:120,
     sRow:4,
     sRp: 4,
+    s:1,
     tileCount: 0,
     tileSessionCount:0,
-    ani: 500,
+    ani: 550,
+    tool: "de",
     throttle: false,
 }
-const g = window.g; 
+const g = window.g;
+
 class tile{
     constructor(t){
         if(!t){t={row:0}}
@@ -37,89 +50,155 @@ class tile{
         g.tileSessionCount++;
         obj.obj = this;
         obj.elm.appendChild(obj.innerElm);
-       // obj.elm.onmousedown = ()=>{this.seeAdjacent(obj)}
+        obj.elm.onmousedown = (e)=>{
+           if(e.buttons === 2 || g.tool === "sc"){return;}
+            obj.elm.classList.add("p"); setTimeout(()=>{obj.elm.classList.remove("p")},g.ani / 2)}
+        obj.elm.onmouseup = ()=>{obj.elm.classList.remove("p")}
         obj.elm.onclick = ()=>{this.action(obj)}
         !g.r[obj.row] ? g.r[obj.row] = {[obj.rp]:obj} : g.r[obj.row][obj.rp] = obj;
         g.t[Object.keys(g.t).length] = obj;
+        if(randomNum(0,10) > 5){obj.elm.setAttribute("m",1)}
+        if(randomNum(0,10) > 5){obj.elm.setAttribute("n",2)}
+        if(randomNum(0,10) > 5){obj.elm.setAttribute("o",3)}
         return obj; 
     }
     gainType = (obj, type)=>{
-        obj.type=type;
-//        console.log(obj)
+        if(type !== "q"){obj.type=type}
+        else{
+            let r = randomNum(0,2);
+            let p = "sc";
+            if(r === 1){p = "sh"}
+            if(r === 2){p = "bl"}
+            obj.q = p;
+        }
+
+    }
+    destroy = (obj)=>{
+        obj.dd = true;
+        if(obj.type === "b"){g.b--;}
+        this.dead(obj, "d");
     }
     action = (obj)=>{
-        let post = true; 
-        if(obj.type === "b"){
-            obj.obj.ani(obj, "b");
-            this.revealTile(obj);
-            g.end();
-            post=false; 
+        let post = true;
+        if(g.block){return false}
+        
+        if(g.tool === "bl" && g.blA > 0 && !obj.dd){
+            this.destroy(obj);
+            g.ga("bl", -1);
         }
-        else if(obj.type === "?") {
-            this.cascade(obj);
+        else if(g.tool ==="sc" && g.scA > 0){
+            this.seeAdjacent(obj);
+            g.ga("sc", -1);
         }
+        else if(g.tool ==="de" && !obj.d || g.tool ==="de" && obj.q){
+            obj.elm.setAttribute("c","true");
+            if(obj.q && !obj.val){
+                g.ga(obj.q, 1);
+                obj.q = false;
+                obj.elm.removeAttribute("q");
+            }
+            if(obj.type === "b"){
+                obj.innerElm.innerHTML = X;
+                obj.obj.ani(obj, "b");
+                this.revealTile(obj);
+                if(g.dmg(-1)){}
+                post=false; 
+            }
+            else if(obj.type === "?") {
+                this.cascade(obj);
+            }
+        }
+        else{
+            {g.anim(g[g.tool],"g-");}
+        }
+
+
         if(post){
-            this.postAction();
+            this.postAction(obj);
         }
      
     }
-    postAction = ()=>{
-        g.up();
+    postAction = (obj)=>{
+        setTimeout(()=>{g.up();
+        if(g.b > 0 && g.blA < 1){warp()}
+        },g.ani);
+        this.cascade(obj,false);
+        
     }
     revealTile = (obj) =>{
         obj.elm.setAttribute("r", "true");
         g.tilesLeft--;
     }
-    cascade = (obj) => {
+    cascade = (obj, lim, l) => {
         let prox = this.adjacent(obj);
         this.revealTile(obj);
-        let no = 0; 
+        let no = 0;
+        obj.val = 0;
+        if(!obj.b && !obj.dd){obj.innerElm.innerHTML = "";}
         for(let i = 0; i < Object.keys(prox).length; i++){
             let p = prox[i];
-            if(p.type === "b"){
+            if(p.type === "b" && !p.dd){
                 no++;
             }
         }
-        if(no > 0){
+        if(no > 0 && !obj.d){
             obj.innerElm.innerHTML = no;
+            obj.val = no; 
+        }
+        else if(obj.type === "b" && !obj.dd){return}
+        else if(obj.q){
+            obj.elm.setAttribute("q", obj.q);
         }
         else {
-            this.dead(obj);
-            for(let i = 0; i < Object.keys(prox).length; i++){
-                if(!prox[i].elm.getAttribute("r")){
-                    this.cascade(prox[i]);
-                }   
+            if(!lim){
+                this.dead(obj);
+                for(let i = 0; i < Object.keys(prox).length; i++){
+                    if(!prox[i].elm.getAttribute("r") && !obj.dd || prox[i].elm.getAttribute("r") && obj.rev || obj.dd === true && g.b > 0 && prox[i].val > 0 && prox[i].elm.getAttribute("r")){
+                        prox[i].rev = false;
+                        let d = obj.dd;
+                        this.cascade(prox[i], d,d);
+                    }   
+                }
             }
+            if(l){this.dead(obj);}
+        }
+        if(lim && !l){
+            obj.innerElm.innerHTML = "";
+            if(no > 0 && obj.type !== "b"){obj.innerElm.innerHTML = no;obj.val = no;}
+            else if (obj.type === "b" && !obj.dd){obj.innerElm.innerHTML = X;}            
+            this.ani(obj, "rev");
+            obj.rev = true;
         }
     }
-    dead = (obj) => {
-        this.ani(obj, "dead");
-        obj.d = true; 
+    dead = (obj, source) => {
+        if(!source){source = ""}
+        if(source === "d"){
+            let clone = {elm: obj.elm.cloneNode(true)};
+            obj.elm.appendChild(clone.elm);
+            this.ani(clone, "deadB", true);
+            obj.innerElm.innerHTML = "";
+            obj.q = 0;
+        }
+        this.ani(obj, "dead " + source);
+        obj.d = true;
+
+
     }
     seeAdjacent = (obj) => {
         let prox = this.adjacent(obj);
-
+        this.cascade(obj, true);
         for(let i = 0; i < Object.keys(prox).length; i++){
             let p = prox[i];
-            if(!p.d){
-                if(p.type==="b"){
-                    p.obj.ani(p, "b");
-                }
-                else {
-                    p.obj.ani(p, "adjacent");
-                }
-               
-            }
+                this.cascade(p, true);
         }
+        
     }
     adjacent = (obj)=>{
         let rp = obj.rp;
         let row = obj.row; 
         let a = {};
         let pushA = (aobj)=>{
-            if(!aobj.d){
-                a[Object.keys(a).length] = aobj; 
-            }
+            a[Object.keys(a).length] = aobj; 
         }
         if(row - 1 >= 0){
             if(rp - 1 >= 0){ pushA(g.r[row-1][rp - 1]);}
@@ -137,114 +216,264 @@ class tile{
 
         return a; 
     }
-    ani = (obj, animation)=>{
-        if(obj.d){return}
+    ani = (obj, animation, kill)=>{
+        if(obj.d && animation !== "rev" && obj.d && animation !== "dead d"){return}
         if(obj.ani !== ""){
             obj.ani = "";
             obj.elm.className = "";
         }
         window.requestAnimationFrame(()=>{
+            if(animation === "rev"){animation = animation + " " + obj.ani}
             obj.ani = animation;
             obj.elm.className = animation;
+            if(animation === "deadB"){
+                window.requestAnimationFrame(()=>{
+                    let style = obj.elm.style; 
+                    style.opacity = 0.1; 
+                    style.transform = "scale(0.1)";
+                });
+            }
+            
             setTimeout(()=>{
                 if(!obj.d && obj.elm.className === animation){
-                    obj.ani = "";
                     obj.elm.className = "";
                 }
+                if(obj.d && obj.elm.classList.contains("rev") ||obj.dd){obj.elm.className = "dead " + (obj.dd ? "d" : "");}
+                if(kill){if(obj.elm.parentNode){obj.elm.parentNode.removeChild(obj.elm)}}
             },g.ani)
         });
 
     }
 }
-function boot(){
+g.boot = ()=>{
+    ui();
     g.newGame = newGame;
     g.up = updateOverlay; 
     g.end = end;
-    newGame();
+    setTimeout(()=>{newGame();},g.ani);
+    document.body.oncontextmenu = (e)=>{e.preventDefault(); g.tswp()}
 
+}
+function ui(){
+    let newElm = (id)=>{let a = document.createElement("div"); a.id = id ? id : ""; return a;}
+    g.wa = newElm("wa");
+    g.wa.appendChild(newElm("wa2"));
+    g.waN = newElm("waN");
+    g.waN.innerHTML = "Preparing warp drive";
+    g.wa.appendChild(g.waN);
+    s.appendChild(g.wa);
+    g.sh = newElm("sh");
+    g.sh.appendChild(newElm("sh2"));
+    g.shN = newElm("shN");
+    g.sh.appendChild(g.shN);
+    s.appendChild(g.sh);
+
+    g.mi = newElm("mi");
+    g.ss = newElm("ss");
+    g.ss.innerHTML = SS;
+    g.pl = newElm("pl");
+    g.pl.innerHTML = PL; 
+    g.mi.appendChild(g.ss);
+    g.mi.appendChild(newElm("mp"))
+    g.mi.appendChild(g.pl);
+    s.appendChild(g.mi);
+
+    g.de = newElm("de");
+    g.de.className = "s";
+    g.de.innerHTML = "<div>∞</div>";
+    g.de.onclick=()=>{g.tswp("de")}
+    b.appendChild(g.de);
+
+    g.he = newElm("he");
+    b.appendChild(g.he);
+
+    g.bl = newElm("bl");
+    g.blN = newElm("blN");
+    g.bl.appendChild(g.blN);
+    g.bl.onclick=()=>{g.tswp("bl")}
+    b.appendChild(g.bl);
+
+    g.sc = newElm("sc");
+    g.scN = newElm("scN");
+    g.sc.appendChild(g.scN);
+    g.sc.onclick=()=>{g.tswp("sc")}
+    b.appendChild(g.sc);
+
+    g.dmg = (dmg)=>{
+
+        if(dmg < 0){
+            g.sh.style.backgroundColor = "var(--d)";
+            g.waN.innerHTML = "Shield down";
+            g.anim(document.body, "hit");
+            setTimeout(()=>{
+                g.sh.style.backgroundColor = "var(--m)";
+            }, g.ani)
+        }
+
+        if(dmg < 0 && Math.abs(dmg) > g.shA){
+            g.shA--;
+            end(); 
+            return false
+        }
+        else {g.shA = g.shA + dmg}
+  
+        if(g.shA > 3){g.shA = 3}
+        updateOverlay();
+        return true; 
+    }
+    g.tswp = (t)=>{
+        g.sc.className = "";
+        g.de.className = "";
+        g.bl.className = "";
+        if(!t){
+            if(g.tool==="de"){t = "bl";}
+            else if(g.tool==="bl"){t = "sc";}
+            else{t = "de";;}
+        }
+        if(t ==="bl"){ g.he.innerHTML = "Use to destroy tiles and "+ X;}
+        else if(t ==="sc"){ g.he.innerHTML = "Use scan tiles to find "+ X;}
+        else {g.he.innerHTML = "Click on tiles to reval tiles and loot.";}
+        g[t].className = "s";
+        g.tool = t;
+    }
+    g.anim = (elm, ani)=>{
+        elm.classList.add(ani);
+        setTimeout(()=>{elm.classList.remove(ani);},g.ani);
+    }
+    g.ga = (t,a,n)=>{
+        g.anim(g[t], a < 0 ? "g-" : "gg");
+        g[t + "N"].innerHTML = (a > 0 ? " +" : " ") + a;
+        g[t + "A"] += a;
+        if(g.scA > 3){g.scA = 3}
+    } 
 }
 function updateOverlay(){
-    b.innerHTML = g.b + " / "+ g.tilesLeft;
-    if(g.b === g.tilesLeft || g.tilesLeft === 0){
-        g.end(true);
+
+    g.sh.className="sh" + g.shA;
+    g.scN.innerHTML = g.scA;
+    g.blN.innerHTML = g.blA;
+    g.shN.innerHTML = "";
+    if(g.tool != "de" && g[g.tool + "A"] <= 0){
+        g.tswp("de");
+    }
+    if(g.b < 1){
+        warp();
     }
 }
+
 function end(win){
+    g.block = true;
+    if(g.ex){return}
+    g.ex = true;
+    clearInterval(g.loop);
+    setTimeout(()=>{endAni()},g.ani);
 
-    let clone = root.cloneNode(true);
-    clone.id="mC";
-    clone.className = "z0";
-    root.parentNode.appendChild(clone);
+    let endAni = ()=>{
+        let clone = root.cloneNode(true);
+        clone.id="mC";
+        clone.className = "z0";
+        root.parentNode.appendChild(clone);
+    
+        if(win){
+            g.lvl.lvl++;     
+            setTimeout(()=>{
+                
+                document.getElementById("m2").className = "tron";
+                for(let i = 0; i < clone.getElementsByTagName("div").length; i++){
+                    let div = clone.getElementsByTagName("div")[i];
+                    if(div.parentNode && div.parentNode.className === "row"){
+                        div.style.backgroundColor = "var(--g)"
+                        div.style.top = randomNum(-500, 500) + "px";
+                        div.style.left = randomNum(-500, 500) + "px";
+                        div.style.transform = "rotate3d(1, 1, 1, "+randomNum(-360, 360) +"deg)";
+                    }
+                }
+                clone.className = "";
+                setTimeout(()=>{
+                    newGame(g.lvl);
+                    setTimeout(()=>{
+                        document.getElementById("m2").className = "";
+                        clone.parentNode.removeChild(clone);
+                    },g.ani)
+                    
+                   
+                }, g.ani);
+            },1)
+        }
+        else {
+            g.waN.innerHTML = "Ship exploded";
+            g.ss.style.transform = "translate(0px, 50px) rotate3d(1, 1, 1, 240deg)";
+            setTimeout(()=>{
+                root.innerHTML="";
+                for(let i = 0; i < clone.getElementsByTagName("div").length; i++){
+                    let div = clone.getElementsByTagName("div")[i];
+                    if(div.parentNode && div.parentNode.className === "row"){
+                        div.style.left = randomNum(-100, 100) + "px";
+                        div.style.top = randomNum(100, 400) + "px";
+                        div.style.transform = "rotate3d(1, 1, 1, "+randomNum(-360, 360) +"deg)";
+                        div.style.backgroundColor = "var(--r)";
+                    }
+                }
+                clone.className = "";
+                    setTimeout(()=>{
+                        clone.parentNode.removeChild(clone);
+                        g.lvl = {lvl:1};
+                        g.shA = 1; g.blA = 1; g.scA = 2;
+                        newGame(g.lvl);
+                    },g.ani * 2)
 
-    if(win){
-        g.lvl++;     
-        setTimeout(()=>{
-            reset();
-            clone.className = "";
-            document.getElementById("m2").className = "tron";
-            for(let i = 0; i < clone.getElementsByTagName("div").length; i++){
-                let div = clone.getElementsByTagName("div")[i];
-                if(div.parentNode && div.parentNode.className === "row"){
-                    div.style.backgroundColor = "var(--g)"
-                    div.style.top = randomNum(-500, 500) + "px";
-                    div.style.left = randomNum(-500, 500) + "px";
-                    div.style.transform = "rotate3d(1, 1, 1, "+randomNum(-360, 360) +"deg)";
-                }
-            }
-            setTimeout(()=>{
-                newGame({});
-                setTimeout(()=>{
-                    document.getElementById("m2").className = "";
-                    clone.parentNode.removeChild(clone);
-                },1)
-                
-               
-            }, 750);
-        },1)
-        console.log("win");
+            },g.ani * 2)
+            
+        }
     }
-    else {
-        setTimeout(()=>{
-            reset();
-            clone.className = "";
-            document.body.style.backgroundColor = "var(--r)";
-            for(let i = 0; i < clone.getElementsByTagName("div").length; i++){
-                let div = clone.getElementsByTagName("div")[i];
-                if(div.parentNode && div.parentNode.className === "row"){
-                    div.style.left = randomNum(-100, 100) + "px";
-                    div.style.top = randomNum(100, 400) + "px";
-                    div.style.transform = "rotate3d(1, 1, 1, "+randomNum(-360, 360) +"deg)";
-                    div.style.backgroundColor = "var(--r)";
-                }
-            }
-            setTimeout(()=>{
-                g.lvl = 0;
-                newGame({});
-                setTimeout(()=>{
-                    clone.parentNode.removeChild(clone);
-                },1)
-                
-               
-            }, 750);
-        },1)
-        
-    }
+
+  
 }
+
 function reset(){
-    document.body.style.backgroundColor = "var(--b)";
+    clearInterval(g.loop);
     root.innerHTML="";
-    b.innerHTML = "";
     g.tileSessionCount = 0; 
-    g.tileSessionCount = 0;
     g.t = {};
     g.r = {};
+    g.tL = 0; 
+    g.block = false;
+    g.wa.style.setProperty("--w", "0px");
+}
+function warp(){
+    g.block = true;
+    g.wa.style.setProperty("--w", "200px");
+    g.waN.innerHTML = "Warping Successful";
+
+    for(let i = 0; i < g.b;  i++){
+        if(!g.dmg(-1)){break;}
+    }
+    if(g.shA > -1){
+        end(true);
+    }
+
+
 }
 function newGame(lvl){
-    if(!lvl){lvl={}}
+
+    if(!lvl){lvl={lvl:1}}
     reset();
-    const rows =  lvl.rows ? lvl.rows: g.sRow + g.lvl;
-    const tr =  lvl.tr ? lvl.tr : g.sRp + g.lvl;
-    g.mb = lvl.b ? lvl.b : g.mb + g.lvl;
+    g.mi.classList.add("lvl"+lvl.lvl);
+    g.ss.style.transform = "translate("+(45*(lvl.lvl -1))+"px, 0px) rotate(30deg)";
+    let ti = g.st + (lvl.lvl * 10);
+    g.timer = ti;
+    g.tL = ti; 
+    g.loop = setInterval(()=>{
+        g.tL--; 
+        let w = (200 - ((g.timer / 100) * g.tL) * 2);
+        g.wa.style.setProperty("--w",  (w < 0 ? 0 : w ) + "px");
+        g.waN.innerHTML = "Warping in " + g.tL;
+        if(g.tL <= 0){warp();}  
+    },1000)
+
+    const rows =  lvl.rows ? lvl.rows: g.sRow + g.lvl.lvl;
+    const tr =  lvl.tr ? lvl.tr : g.sRp + g.lvl.lvl;
+    g.mb = lvl.b ? lvl.b : g.bb + g.lvl.lvl;
     g.tr = tr; 
     g.rows = rows; 
 
@@ -268,12 +497,15 @@ function newGame(lvl){
         if(t.type === "b"){nB--}
         else {
             t.obj.gainType(t, "b");
-        }
-        
+        }     
     }
-    b.innerHTML = g.mb + " / "+ g.tileSessionCount
-    g.tilesLeft = g.tileSessionCount;
+    for(let i = 0; i < g.q; i++){
+        let ran = randomNum(0, Object.keys(g.t).length - 1);
+        let t = g.t[ran];
+        if(t.type === "?"){t.obj.gainType(t, "q");} 
+    }
     g.b = g.mb - nB;
-
+    g.ga("bl", g.b);
+    setTimeout(()=>{document.body.className = "";g.ex = false},1)
     g.up();
 }
