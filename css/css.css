@@ -32,21 +32,23 @@ p{margin: 0px;}
 #s,#b {
     height: 100px;
     background-color: var(--t);
+    position: relative;
 }
 #b{
     position: relative;
 }
-#he {
+#aid {
     position: absolute;
-    top: 100px;
-    color: white;
-    font-size: 12px;
+    top: -10px;
+    left: 10px;
+    color: var(--l);
 }
 #a {
     width: 400px;
     height: 600px;
     background-color: var(--s);
     margin: auto;
+    position: relative;
 }
 
 #mp {
@@ -97,6 +99,11 @@ p{margin: 0px;}
     transition-duration: 0.75s;
     transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
+#al {
+    position: absolute;
+    right: 5px;
+    color: var(--l);
+}
 .tron{
     transform: rotate3d(1, 0, 0, 90deg);
 }
@@ -109,6 +116,7 @@ p{margin: 0px;}
 }
 #mC {
     position: absolute;
+    transform: translate(0, 180px);
 }
 .z0{    z-index: 0;}
 #mC .row > div {
@@ -149,7 +157,6 @@ p{margin: 0px;}
     background-color: #ababab;
     transform: rotate(45deg);
     box-shadow: inset 0px 0px 3px 0px #4c4c4c;
-    transition-duration: 0.5s;
 }
 .row > div[m="1"]:after{
     content: "";
@@ -175,6 +182,9 @@ p{margin: 0px;}
  .row >  div.dead:after,  .row >  div.dead:before, .row > div.dead[q] > div:before {
     transform: scale(0.01);
 }
+.row > div > div{
+    color: white;
+}
 
 .row > div[r=true] > div {
     text-align: center;
@@ -184,7 +194,7 @@ p{margin: 0px;}
     transition-timing-function: ease-in;
     line-height: 2;
     text-shadow: 0 0 2px #000000;
-    color: white;
+
     transition-duration: 0.2s;
 
 }
@@ -201,6 +211,14 @@ p{margin: 0px;}
 }
 .row .p {
     box-shadow: inset 0px 0px 10px 2px var(--l);    
+}
+.row > div:not(.p) > div.reveal{
+    width: var(--w);
+    height: var(--h);
+    border-radius: inherit;
+    background-color: var(--l);
+    box-shadow: inset 0px 0px 5px 1px #ffffff;
+    transition-duration: 0.3s;
 }
 .row .dead {
     opacity: 0.4;
@@ -330,3 +348,14 @@ p{margin: 0px;}
 }
 .gg{color: var(--g)!important;background-color: var(--g)!important;}
 .g-{color: var(--d)!important;background-color: var(--d)!important;}
+.ninja{display: none;}
+#help {
+    position: absolute;
+    top: 100px;
+    background-color: var(--m);
+    color: white;
+    z-index: 50;
+    height: 370px;
+    padding: 15px;
+}
+#again{cursor: pointer;}
