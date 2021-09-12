@@ -16,7 +16,7 @@ window.g = {
     lvl:{lvl:1},
     shA: 1,
     blA:1,
-    scA:2,
+    scA:1,
     q: 2,
     b:1,
     mb:1,
@@ -445,7 +445,7 @@ function end(win){
                             h.innerHTML += "<br>Score: " + points; 
                             localStorage.setItem('score', points);
                         }
-                        h.innerHTML += "<br>Last highscore " + (highscore ? highscore : "none");
+                        h.innerHTML += "<br>Highscore " + (highscore ? highscore : "none");
                         
                         h.innerHTML += "<br><p id='again'>Play again?</p>";
                         document.getElementById("again").onclick=()=>{location.reload()}
