@@ -1,6 +1,7 @@
 const root = document.getElementById("m");
 const b = document.getElementById("b");
 const s = document.getElementById("s");
+const h = document.getElementById("help");
 const X = "👾";
 const SS = "🚀";
 const PL = "🪐";
@@ -52,7 +53,7 @@ class tile{
         obj.elm.appendChild(obj.innerElm);
         obj.elm.onmousedown = (e)=>{
            if(e.buttons === 2 || g.tool === "sc"){return;}
-            obj.elm.classList.add("p"); setTimeout(()=>{obj.elm.classList.remove("p")},g.ani / 2)}
+            obj.elm.classList.add("p"); setTimeout(()=>{obj.elm.classList.remove("p")},g.ani)}
         obj.elm.onmouseup = ()=>{obj.elm.classList.remove("p")}
         obj.elm.onclick = ()=>{this.action(obj)}
         !g.r[obj.row] ? g.r[obj.row] = {[obj.rp]:obj} : g.r[obj.row][obj.rp] = obj;
@@ -75,7 +76,6 @@ class tile{
     }
     destroy = (obj)=>{
         obj.dd = true;
-        if(obj.type === "b"){g.b--;}
         this.dead(obj, "d");
     }
     action = (obj)=>{
@@ -91,12 +91,13 @@ class tile{
             g.ga("sc", -1);
         }
         else if(g.tool ==="de" && !obj.d || g.tool ==="de" && obj.q){
-            obj.elm.setAttribute("c","true");
-            if(obj.q && !obj.val){
+            
+            if(obj.q && !obj.val && obj.elm.getAttribute("r")){
                 g.ga(obj.q, 1);
                 obj.q = false;
                 obj.elm.removeAttribute("q");
             }
+            obj.elm.setAttribute("c","true");
             if(obj.type === "b"){
                 obj.innerElm.innerHTML = X;
                 obj.obj.ani(obj, "b");
@@ -127,6 +128,9 @@ class tile{
     }
     revealTile = (obj) =>{
         obj.elm.setAttribute("r", "true");
+        let anim = "reveal";
+        obj.innerElm.classList.add(anim)
+        setTimeout(()=>{obj.innerElm.classList.remove(anim)},g.ani);
         g.tilesLeft--;
     }
     cascade = (obj, lim, l) => {
@@ -253,9 +257,19 @@ g.boot = ()=>{
     setTimeout(()=>{newGame();},g.ani);
     document.body.oncontextmenu = (e)=>{e.preventDefault(); g.tswp()}
 
+    setTimeout(()=>{if(document.monetization && document.monetization.state) { 
+        console.log("coil active get free scan");
+        g.ga("sc", 1);
+     }},g.ani);
+    
 }
 function ui(){
     let newElm = (id)=>{let a = document.createElement("div"); a.id = id ? id : ""; return a;}
+    g.aid = newElm("aid");
+    s.appendChild(g.aid);
+    g.aid.onclick=()=>{h.classList.contains("ninja") ? h.className = "":h.className = "ninja";}
+    g.aid.innerHTML = "Help";
+
     g.wa = newElm("wa");
     g.wa.appendChild(newElm("wa2"));
     g.waN = newElm("waN");
@@ -284,9 +298,6 @@ function ui(){
     g.de.onclick=()=>{g.tswp("de")}
     b.appendChild(g.de);
 
-    g.he = newElm("he");
-    b.appendChild(g.he);
-
     g.bl = newElm("bl");
     g.blN = newElm("blN");
     g.bl.appendChild(g.blN);
@@ -298,6 +309,10 @@ function ui(){
     g.sc.appendChild(g.scN);
     g.sc.onclick=()=>{g.tswp("sc")}
     b.appendChild(g.sc);
+
+    g.al = newElm("al");
+    s.appendChild(g.al);
+
 
     g.dmg = (dmg)=>{
 
@@ -330,9 +345,6 @@ function ui(){
             else if(g.tool==="bl"){t = "sc";}
             else{t = "de";;}
         }
-        if(t ==="bl"){ g.he.innerHTML = "Use to destroy tiles and "+ X;}
-        else if(t ==="sc"){ g.he.innerHTML = "Use scan tiles to find "+ X;}
-        else {g.he.innerHTML = "Click on tiles to reval tiles and loot.";}
         g[t].className = "s";
         g.tool = t;
     }
@@ -340,12 +352,21 @@ function ui(){
         elm.classList.add(ani);
         setTimeout(()=>{elm.classList.remove(ani);},g.ani);
     }
-    g.ga = (t,a,n)=>{
+    g.ga = (t,a)=>{
         g.anim(g[t], a < 0 ? "g-" : "gg");
         g[t + "N"].innerHTML = (a > 0 ? " +" : " ") + a;
         g[t + "A"] += a;
         if(g.scA > 3){g.scA = 3}
-    } 
+    }
+    
+    let help = (text)=>{return "<br>"+text+ ".<br>"}
+    h.innerHTML = SS + " needs to reach " + PL + " to win.<br>"; 
+    h.innerHTML += help("Use ⛏ to reveal meteoroids and collect loot, don't click " + X + " or you lose shield");
+    h.innerHTML += help("Use ⚔ to destroy hostile " + X + " use wisely as you barely have enough each round");
+    h.innerHTML += help("Use ◍ to reveal a meteor and all adjacent meteoroids");
+    h.innerHTML += help("A number on a revealed meteor indicates how many adjacent "+ X + " it has");
+    h.innerHTML += help("Warping will make you lose shields equal to the number of " + X + " left");
+    h.innerHTML += help("<br> PC Tips: Right click to cycle tools and use browser-zoom to adjust optimal size");
 }
 function updateOverlay(){
 
@@ -356,7 +377,17 @@ function updateOverlay(){
     if(g.tool != "de" && g[g.tool + "A"] <= 0){
         g.tswp("de");
     }
+    let alien = 0; 
+    for(let i = 0; i < Object.keys(g.t).length; i++){
+        let metor = g.t[i]; 
+        if(metor.type ==="b" && !metor.dd){
+            alien++;
+        }
+    }
+    g.b=alien; 
+    g.al.innerHTML = g.b + " " + X; 
     if(g.b < 1){
+        g.al.innerHTML = "";
         warp();
     }
 }
@@ -390,7 +421,37 @@ function end(win){
                 }
                 clone.className = "";
                 setTimeout(()=>{
-                    newGame(g.lvl);
+                    if(g.lvl.lvl < 6){
+                        newGame(g.lvl);
+                        
+                    }
+                    else {
+                        reset();
+                        h.innerHTML = "YOU WIN!<br><br>";
+                        let points = (g.scA * 10) + (g.blA * 5) + (g.shA * 20);
+                        h.classList = "win";
+
+                        let highscore = localStorage.getItem("score");
+                        if(highscore){
+                            if(highscore < points){
+                                h.innerHTML += "<br> NEW HIGHSCORE - " + points;
+                                localStorage.setItem('score', points);
+                            }
+                            else {
+                                h.innerHTML += "<br>Score: " + points;
+                            }
+                        }
+                        else {
+                            h.innerHTML += "<br>Score: " + points; 
+                            localStorage.setItem('score', points);
+                        }
+                        h.innerHTML += "<br>Last highscore " + (highscore ? highscore : "none");
+                        
+                        h.innerHTML += "<br><p id='again'>Play again?</p>";
+                        document.getElementById("again").onclick=()=>{location.reload()}
+                        g.ss.style.transform += " scale(0.1)  rotate(160deg)";
+                    }
+                   
                     setTimeout(()=>{
                         document.getElementById("m2").className = "";
                         clone.parentNode.removeChild(clone);
@@ -408,8 +469,8 @@ function end(win){
                 for(let i = 0; i < clone.getElementsByTagName("div").length; i++){
                     let div = clone.getElementsByTagName("div")[i];
                     if(div.parentNode && div.parentNode.className === "row"){
-                        div.style.left = randomNum(-100, 100) + "px";
-                        div.style.top = randomNum(100, 400) + "px";
+                        div.style.left = randomNum(-150, 150) + "px";
+                        div.style.top = randomNum(450, 1050) + "px";
                         div.style.transform = "rotate3d(1, 1, 1, "+randomNum(-360, 360) +"deg)";
                         div.style.backgroundColor = "var(--r)";
                     }
@@ -426,8 +487,6 @@ function end(win){
             
         }
     }
-
-  
 }
 
 function reset(){
@@ -439,6 +498,7 @@ function reset(){
     g.tL = 0; 
     g.block = false;
     g.wa.style.setProperty("--w", "0px");
+    g.al.innerHTML = "";
 }
 function warp(){
     g.block = true;
