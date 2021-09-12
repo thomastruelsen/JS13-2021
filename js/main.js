@@ -499,6 +499,7 @@ function reset(){
     g.block = false;
     g.wa.style.setProperty("--w", "0px");
     g.al.innerHTML = "";
+    g.tswp("de")
 }
 function warp(){
     g.block = true;
